@@ -1,0 +1,20 @@
+\section{Conclusion}
+After analyzing sequential steps of feedforward and backpropagation separately, we conclude that the training approach of convolutional neural network through gradient descent method is summarized as follows
+\begin{table}[htbp]
+\centering
+\begin{tabular}{l}
+	\hline
+	Training procedure of \emph{Convolutional Neural Network} \\
+	\hline
+	Initialize weights $\bm{W}$ and biases $\bm{b}$ in each layer with stochastic values. \\
+	\textbf{Repeat} \\
+	\quad 1.~Compute activation forwards through every element in each layer. \\
+	\quad 2.~Evaluate Loss function $E$ of the last layer's output. \\
+	\quad 3.~Compute backwards the gradients for weights $\bm{W}$ and biases $\bm{b}$ in each layer, respectively. \\
+	\quad 4.~Update parameters $\bm{W}$ and $\bm{b}$ through gradient descent method. \\
+	\textbf{Until} \\
+	\quad Loss function $E$ is smaller than threshold pre-determined, or the maximum number of iterations reaches. \\
+	\hline
+\end{tabular}
+%\caption{} \label{}
+\end{table}

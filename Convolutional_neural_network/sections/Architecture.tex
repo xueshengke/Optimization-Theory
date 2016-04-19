@@ -1,0 +1,8 @@
+\section{Architecture}
+Typically convolutional neural network (see Fig.~\ref{fig:CNN}) is composed of pairs of convolution layer and pooling layer with a fully connected layer at the last stage of the architecture.~The input of network is a two-dimensional image and its feedforward process contains convolution and pooling (also subsampling) operations that generate the corresponding layers' feature maps.
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.5\textwidth]{figures/CNN.png}
+	\caption{A convolutional neural network architecture} \label{fig:CNN}
+\end{figure}
+After hierarchical feedforward steps, the feature maps before the fully connected layer which have smaller size than primitive input are all concatenated into a long vector.~Considering the classification task, the output of network possesses $k$ units (the class number for discrimination) that are organized as a ``one-of-$k$'' code where only one element of output is positive and the rest of them are either zero or negative depending on the choice of output activation function.~Like other artificial neural networks, CNN has numerous adjustable parameters, namely weights and biases (notation $\bm{W}$ and $\bm{b}$), respectively.~Error backpropagation algorithm which is efficient in multi-layer structure is described below to interpret the approach of updating the parameters concretely.

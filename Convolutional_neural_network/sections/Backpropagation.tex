@@ -1,0 +1,63 @@
+\section{Backpropagation Pass}
+In short, we update the parameters $\bm{W}$ and $\bm{b}$ in the light of rules given by
+\begin{align}
+	\bm{W}_{\tau+1} &= \bm{W}_\tau - \eta \frac{\partial E}{\partial \bm{W}_\tau}, \\
+	\bm{b}_{\tau+1} &= \bm{b}_\tau - \eta \frac{\partial E}{\partial \bm{b}_\tau}.
+\end{align}
+Here $\tau$ denotes the number of iterations and learning rate (notation $\eta$) is usually a small value.~Since multi-layer architecture results in the expressions of partial derivatives with respect to $\bm{W},\bm{b}$, in former layer, being complex considerably through the chain rule, we use error backpropagation algorithm to simplify them.
+
+The ``error'' which propagates backwards through the network can be thought of as ``sensitivities'' with respect to the current total input of each unit, yields
+\begin{align}
+	\bm{\delta}^\ell = \frac{\partial E}{\partial \bm{u}^\ell}, ~~ \bm{u}^\ell = \bm{W}^\ell \bm{x}^{\ell - 1} + \bm{b}^\ell, ~~ \bm{x}^\ell = f(\bm{u}^\ell).
+\end{align}
+
+\subsection{Fully connected Layer}
+We obtain the error and corresponding gradients of the last layer without much effort,
+\begin{align}
+	\bm{\delta}^L &= (\bm{y}^n - \bm{t}^n) \circ f'(\bm{u}^L), \label{eq:delta_L}\\
+	\frac{\partial E}{\partial \bm{W}^L} &= \bm{\delta}^L (\bm{x}^{L-1})^T, ~~ \frac{\partial E}{\partial \bm{b}^L} = \bm{\delta}^L.
+\end{align}
+In \eqref{eq:delta_L}, ``$\circ$'' denotes the Hadamard product (i.e. element-wise multiplication).~From that, the partial derivative with respect to $\bm{W}$ is computed as an outer product between the vector of input and sensitivities, and more compact for $\bm{b}$.~Then this error is passed to previous layer by means of the recurrence relation below, 
+\begin{align}
+	\bm{\delta}^{L-1} = (\bm{W}^L)^T \bm{\delta}^L \circ f'(\bm{u}^{L-1}). \label{eq:recursion}
+\end{align}
+
+\subsection{Pooling Layer}
+Having acquired the sensitivities for each map of the pooling layer $\ell$, we immediately compute the gradient for $\bm{b}$ by summing over all elements simply in a sensitivities map,
+\begin{align}
+	\frac{\partial E}{\partial b_j} = \sum_{u,v} (\bm{\delta}_j^\ell)_{u,v}.
+\end{align}
+Assuming that it is a convolution layer $\ell-1$ that is distributed before a pooling layer $\ell$.~Hence a block of pixels in convolution layer's map is associated with one pixel in present layer's map.~In case of mean pooling operation, to propagate sensitivities back efficiently, we extend the sensitivity map's dimension (and average its value) in layer $\ell$ to make it exactly same size as prior layer $\ell-1$, then multiply this quantity element-wise by the derivative of activation function evaluated at $\ell-1$ layer's pre-activation input, $\bm{u}$.~We can repeat the same computation for each map $j$ between two layers, see Fig.~\ref{fig:delta_pooling} for details.
+\begin{align}
+	\bm{\delta}_j^{\ell-1} &= up(\bm{\delta}_j^\ell) \circ f'(\bm{u}_j^{\ell-1}), \\
+	up(\bm{x}) &= \bm{x} \otimes \bm{1}_{n \times n} / n^2.
+\end{align}
+Note that ``$\otimes$'' represents the Kronecker product, and $up(\cdot)$ denotes an upsampling operation that duplicates each pixel in the input horizontally and vertically $n$ times to the output (i.e. to be a $n \times n$ matrix) when the factor of pooling is $n$.
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.4\textwidth]{figures/backprop_2.png}
+	\caption{Backpropagation in pooling layer} \label{fig:delta_pooling}
+\end{figure}
+
+\subsection{Convolution Layer} 
+In case of obtained the sensitivities for each map of the convolution layer $\ell$, we compute the gradients for kernel weights $\bm{k}_{mn}^\ell$ and $\bm{b}$ using backpropagation where weights are shared across many connections.~Thus, we sum the gradients, for a given weight $\bm{k}_{mn}^\ell$, over all connections that are related to this weight.~We do not repeat interpreting the gradients for $\bm{b}$ due to the same method of calculation showed above.
+\begin{align}
+	\frac{\partial E}{\partial \bm{k}_{mn}^\ell} = \sum_{u,v} (\bm{\delta}_j^\ell)_{uv} (\bm{p}_{mn}^{\ell-1})_{uv},~\frac{\partial E}{\partial b_j} = \sum_{u,v} (\bm{\delta}_j^\ell)_{u,v}. \label{eq:kernel_mn}
+\end{align}
+In \eqref{eq:kernel_mn}, the \emph{patch} denoted by $\bm{p}_{mn}^{\ell-1}$ is a part matrix of $\bm{x_i}^{\ell-1}$ that was multiplied element-wise by $\bm{k}_{mn}^\ell$ during convolution in feedforward pass in order to compute the corresponding units in the output map $\bm{x}_j^{\ell}$.~Fig.~\ref{fig:kernel_mn} demonstrates this process concretely.
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.4\textwidth]{figures/backprop_delta_2.png}
+	\caption{Backpropagation in convolution layer} \label{fig:kernel_mn}
+\end{figure}
+
+Supposing that a pooling layer $\ell-1$ is followed by a convolution layer $\ell$.~The difficulty lies in computing the sensitivity maps that propagates back to the previous layer $\ell-1$.~Here, we figure out how a given unit in the previous layer's sensitivity map $\bm{\delta}_i^{\ell-1}$ participates in generating the patch in the current layer's sensitivity map $\bm{\delta}_j^\ell$ through kernels mentioned.~Therefore, we apply a recursion rule that looks something like equation \eqref{eq:recursion}.~Observe that the weights multiplying the connections between two layers are exactly the rotated convolution kernels.~The operation goes below
+\begin{align}
+	\bm{\delta}_i^{\ell-1} = (\text{rot180}(\bm{K}_{ij}^\ell) \circledast \bm{\delta}_j^\ell) \circ f'(\bm{u}_i^{\ell-1}),
+\end{align}
+where ``$\circledast$'' denotes a full convolution operation that will automatically pad the missing inputs with zeros.~Notice that the kernel $\bm{K}_{ij}^\ell$ is rotated before to make the convolution perform cross-correlation actually.~Fig.~\ref{fig:delta_convolution} yields the detailed procedure.
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.4\textwidth]{figures/backprop_delta_1.png}
+	\caption{Sensitivities backpropagation process} \label{fig:delta_convolution}
+\end{figure}

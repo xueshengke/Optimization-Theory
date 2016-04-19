@@ -1,0 +1,8 @@
+\section{Stacked Autoencoder} \label{sec:stacked}
+Stacked autoencoder neural network is composed of multi-layer sparse autoencoders, see Fig.~\ref{fig:stacked_autoencoder}.~It takes the outputs from the previous autoencoder as the inputs for the next autoencoder.
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.4\textwidth]{figures/stacked_autoencoder.png}
+	\caption{A stacked autoencoder neural network} \label{fig:stacked_autoencoder}
+\end{figure}
+A fair way to update parameters for a stacked autoencoder is to use \textbf{greedy layer-wise} training.~To do this, we train the first layer on the raw input to get fine parameters $\bm{W}^{(1)}, \bm{b}^{(1)}$.~Note that the vector of activation of hidden units $\bm{a}^{(2)}$ is a kind of sparse representation, interpreted above, of the raw input.~Therefore, we apply this as the input to train parameters $\bm{W}^{(2)}, \bm{b}^{(2)}$ in second layer.~Repeat this procedure for subsequent layers.~This method trains the parameters of each layer individually while freezing parameters for the remainder of the network.~To acquire better results, after this stage of training is accomplished, \textbf{fine-tuning} using backpropagation can be employed to improve the results by tuning parameters of all layers that are changed simultaneously.~If the only interest lies on the purpose of classification, the common practice is to then discard the ``decoding'' layers of the stacked autoencoder and link the last hidden layer $\bm{a}^{(n)}$ to the softmax classifier, as Fig.~\ref{fig:stacked_autoencoder} illustrates.~The gradients from the (softmax) classification error will be propagated backwards to the ``encoding'' layers to guarantee the efficiency of training.

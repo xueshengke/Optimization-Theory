@@ -1,0 +1,47 @@
+\section{Feedforward Pass}
+\subsection{Convolution Layer}
+At a convolution layer $\ell$, the previous layer's feature maps (or original input) $\bm{x}_i^{\ell-1}$ are convolved with adjustable kernels (also weights) $\bm{k}_{ij}^\ell$ and put through the activation function to form the output feature map.~In general, we have that
+\begin{align}
+\bm{x}_j^\ell = f \left( \sum_{i \in M_j} \bm{x}_i^{\ell-1} \ast \bm{k}_{ij}^\ell + b_j^\ell \right),
+\end{align}
+where $M_j$ represents a selection of input maps, e.g. pairs or triplets of combinations.~Each output map is given an additive bias $b$, but for a particular output map, the input maps will be computed with distinct kernels, see Fig.~\ref{fig:convolution}.
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.25\textwidth]{figures/convolve_kernel.png}
+	\caption{Convolution operation} \label{fig:convolution}
+\end{figure}
+The activation function $f(\cdot)$ is commonly chosen to be the sigmoid function $f(x)=a/(1+e^{-bx})$ or the hyperbolic tangent function $f(x)=a\tanh(bx)$.~In addition, it is convenient that the derivatives of both may be represented by themselves, i.e., 
+\begin{align}
+	\text{sigmoid} \quad & f'(x) = f(x)(1 - f(x)), \\
+	\text{tanh} \quad & f'(x) = 1 - f^2 (x).
+\end{align}
+
+\subsection{Pooling Layer}
+A pooling layer produces a downsampled version of the input maps.~The subsampling operation does not alter the number of feature maps but the sizes of them.~That is, $N$ input maps will obtain exactly $N$ output maps with a smaller dimension.~More formally,
+\begin{align}
+	\bm{x}_j^\ell = f(\text{down}(\bm{x}_j^{\ell-1}) + b_j^\ell),
+\end{align}
+where $\text{down}(\cdot)$ is a pooling (or subsampling) operation.~Specifically this function will extract the average (mean pooling) or the maximum (max pooling) over each distinct $n$-by-$n$ block in an input map so that the corresponding output map is $n$-times smaller along both spatial dimensions but preserves the characteristics simultaneously.~Each output map also plus an additional bias $b$.~Fig.~\ref{fig:pooling} illustrates this procedure.
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.45\textwidth]{figures/pooling.png}
+	\caption{Pooling operation} \label{fig:pooling}
+\end{figure}
+
+In the derivation that follows, we will consider the squared-error loss function.~For a multi-class problem with $c$ class and $N$ training examples, this error is given by
+\begin{align}
+	E^N = \frac{1}{2} \sum_{n=1}^{N} \sum_{k=1}^{c} (t_k^n - y_k^n)^2.
+\end{align}
+Here $t_k^n$ is the $k$-th dimension of the $n$-th pattern's corresponding label, and $y_k^n$ is similarly the value of the $k$-th output layer unit in response to the $n$-th input pattern.~Because this error over the entire dataset is just a sum over the individual errors on each pattern, we will consider it with respect to a single pattern, i.e. the $n$-th one,
+\begin{align}
+	E^n = \frac{1}{2} \sum_{k=1}^{c} (t_k^n - y_k^n)^2 = \frac{1}{2} \parallel \bm{t}^n - \bm{y}^n \parallel _2^2.
+\end{align}
+Then we formulate our problem to the standard form as follows, 
+\begin{align}
+\text{minimize} \quad \sum_n \frac{1}{2} \parallel \bm{t}^n - \bm{y}^n \parallel _2^ 2.
+\end{align}
+Note that there is no constraint though $\bm{y}^n$, which is the output vector of last layer, can be represented as a complicated function with respect to variables $W,b$.~Because of the hierarchical convolution and pooling, we are not able to understand the relationship between $\bm{y}^n$ and $W,b$, directly.~In convolutional neural network, tiny changes of $W$ somehow may lead to obvious promotion or deterioration on its performance, but gigantic variations of $W$ may not work in the same way.~In brief, it is difficult to comprehend or prove whether the problem proposed above is convex or not.
+
+Though the convexity of our problem remains unknown (i.e., we can not find the global optimal solutions $W,b$ straightforwardly), it is still possible to employ the gradient descent method, one of the effective approaches for unconstrained minimization, to solve the problem. 
+
+With a variety of $W$ and $b$, we do not insure that $W$ and $b$ converge eventually to their global optimal solutions instead of local optimal solutions, respectively.~In practice, it is quite probable to get to the latter case.
